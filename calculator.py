@@ -2,7 +2,7 @@ print("Calculator")
 result = 0
 run_again = True
 
-def calculate():
+def calculate(operation: str, num1: int, num2: int):
     # global keyword allows us to modify the variable outside of the current scope
     global result
     if operation == "+":
@@ -11,7 +11,7 @@ def calculate():
         result = num1 - num2
     elif operation == "/":
         if num2 == 0:
-            print("Not a number. Try again!")
+            print("Division by zero is undefined. Enter a non-zero number.")
             return
         else:
             result = num1 / num2
@@ -28,7 +28,7 @@ while run_again:
         try:
             num1 = int(input("Enter num 1: "))
             num2 = int(input("Enter num 2: "))
-            calculate()
+            calculate(operation, num1, num2)
             continue_calc = str(input("Continue? y/n"))
             if continue_calc == "n":
                 break
