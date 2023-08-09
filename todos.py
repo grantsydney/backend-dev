@@ -37,8 +37,6 @@ def create_task(task: Task):
 
 @app.put("/todos/{id}")
 def update_task(id: int, task: Task):
-  # if id > len(todos):
-    # raise HTTPException(status_code=404, detail="Invalid ID, task not found.")
   if 0 <= id < len(todos):
     itemToUpdate = todos[id]
     itemToUpdate.name = task.name
