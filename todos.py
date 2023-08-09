@@ -1,5 +1,5 @@
 from datetime import datetime
-from uuid import UUID
+from uuid import uuid4
 from fastapi import FastAPI, HTTPException
 
 from pydantic import BaseModel
@@ -14,7 +14,7 @@ class Task(BaseModel):
   tag: str
   created_time: str
   updated_time: str
-  task_id: UUID
+  task_id: str
 
 @app.get("/")
 def root():
@@ -31,17 +31,25 @@ def read_task(id: int):
 @app.post("/todos/")
 def create_task(task: Task):
   task.created_time = datetime.now()
+  task.task_id = uuid4()
   todos.append(task)
   return task
 
 @app.put("/todos/{id}")
 def update_task(id: int, task: Task):
-  itemToUpdate = todos[id]
-  itemToUpdate.name = task.name
-  itemToUpdate.description = task.description
-  itemToUpdate.updated_time = datetime.now()
-  todos[id] = itemToUpdate
-  return itemToUpdate
+  # if id > len(todos):
+    # raise HTTPException(status_code=404, detail="Invalid ID, task not found.")
+  if 0 <= id < len(todos):
+    itemToUpdate = todos[id]
+    itemToUpdate.name = task.name
+    itemToUpdate.description = task.description
+    itemToUpdate.updated_time = datetime.now()
+    todos[id] = itemToUpdate
+    return itemToUpdate
+  else:
+    raise HTTPException(status_code=404, detail="Invalid ID, task not found.")
+
+
 
 # delete 
 @app.delete("/todos/{id}")
