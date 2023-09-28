@@ -1,54 +1,31 @@
 from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
 
-
-# class ItemBase(BaseModel):
-#     title: str
-#     description: str | None = None
-
-
-# class ItemCreate(ItemBase):
-#     pass
-
-
-# class Item(ItemBase):
-#     id: int
-#     owner_id: int
-
-#     class Config:
-#         orm_mode = True
 
 class TaskBase(BaseModel):
     name: str
-    description: str | None = None
-    tag: str
-    created_time: str
-    updated_time: str
-    task_id: str
+    description: Optional[str] = None
+    tag: Optional[str] = None
 
 class TaskCreate(TaskBase):
     pass
 
-
 class Task(TaskBase):
     id: int
-    owner_id: int
+    task_id: str
+    created_time: Optional[str] = None
+    updated_time: Optional[str] = None
 
     class Config:
         orm_mode = True
-
-class UserBase(BaseModel):
-    email: str
-
-
-class UserCreate(UserBase):
-    password: str
+        fields = {
+            'created_time': {'default_factory': lambda: str(datetime.utcnow())},
+            'updated_time': {'default_factory': lambda: str(datetime.utcnow())},
+        }
 
 
-class User(UserBase):
-    id: int
-    is_active: bool
-    # items: list[Item] = []
-    tasks: list[Task] = []
-
-    class Config:
-        orm_mode = True
+class TaskUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    tag: Optional[str] = None

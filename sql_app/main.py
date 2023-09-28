@@ -18,62 +18,44 @@ def get_db():
         db.close()
 
 
-@app.post("/users/", response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_email(db, email=user.email)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return crud.create_user(db=db, user=user)
+# Create
+@app.post("/tasks", response_model=schemas.Task)
+def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
+    db_task = crud.create_task(db=db, task=task)
+    return db_task
 
-
-@app.get("/users/", response_model=list[schemas.User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = crud.get_users(db, skip=skip, limit=limit)
-    return users
-
-
-@app.get("/users/{user_id}", response_model=schemas.User)
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    db_user = crud.get_user(db, user_id=user_id)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return db_user
-
-
-# @app.post("/users/{user_id}/items/", response_model=schemas.Item)
-# def create_item_for_user(
-#     user_id: int, item: schemas.ItemCreate, db: Session = Depends(get_db)
-# ):
-#     return crud.create_user_item(db=db, item=item, user_id=user_id)
-
-
-# @app.get("/items/", response_model=list[schemas.Item])
-# def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-#     items = crud.get_items(db, skip=skip, limit=limit)
-#     return items
-
-
-@app.post("/users/{user_id}/tasks/", response_model=schemas.Task)
-def create_task_for_user(
-    user_id: int, task: schemas.TaskCreate, db: Session = Depends(get_db)
-):
-    return crud.create_user_task(db=db, task=task, user_id=user_id)
-
-# @app.get("/tasks/", response_model=schemas.Task)
-# def get_task_by_tag(tag: str, db: Session = Depends(get_db)):
-#     db_task = crud.get_task_by_tag(db, tag=tag)
-#     if db_task is None:
-#         raise HTTPException(status_code=404, detail="Task not found.")
-#     return db_task
-
-# make tag param optional so they can filter by tag
+# Read all tasks and fillter tasks by tag
+# make tag param optional so user can filter by tag or not
 @app.get("/tasks/", response_model=list[schemas.Task])
-def read_tasks(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    tasks = crud.get_tasks(db, skip=skip, limit=limit)
-    return tasks
+def read_tasks(tag: str = None, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    if tag:
+        tasks = db.query(models.Task).filter(models.Task.tag.like(f"%{tag}%")).offset(skip).limit(limit).all()
+    else:
+        tasks = db.query(models.Task).offset(skip).limit(limit).all()
+    return tasks  
 
-# delete 
+@app.get("/tasks/name/{name}")
+def read_tasks_by_name(name: str, db: Session = Depends(get_db)):
+    tasks = crud.get_tasks_by_name(db, name)
+    if not tasks:
+        raise HTTPException(status_code=404, detail="Tasks not found")
+    return tasks
+    
+# Update
+@app.put("/tasks/{id}", response_model=schemas.Task)
+def update_task(id: str, task: schemas.TaskUpdate, db: Session = Depends(get_db)):
+    db_task = crud.get_task(db, id=id)
+    if db_task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    db_task = crud.update_task(db, id=id, task=task)
+    return db_task
+
+
+# Delete
 @app.delete("/tasks/{id}")
-def delete_task(id:int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-  tasks = crud.get_tasks(db, skip=skip, limit=limit)
-  return tasks
+def delete_task(id: str, db: Session = Depends(get_db)):
+    task = crud.get_task(db, id=id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    crud.delete_task(db, id=id)
+    return {"message": "Task deleted successfully"}
